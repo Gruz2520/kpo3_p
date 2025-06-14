@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Микросервисы Интернет-магазина</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .service-section {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .service-section h2 { margin-top: 0; color: #333; }
+        .form-group { margin-bottom: 10px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="number"], textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background-color: #0056b3; }
+        .response-area {
+            background-color: #e9e9e9;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Управление Микросервисами Интернет-магазина</h1>
+
+    <div class="service-section">
+        <h2>Payments Service</h2>
+        <h3>Создать счет</h3>
+        <div class="form-group">
+            <label for="createAccountUserId">ID пользователя:</label>
+            <input type="number" id="createAccountUserId" value="1">
+        </div>
+        <button onclick="createAccount()">Создать счет</button>
+        <div class="response-area" id="createAccountResponse"></div>
+
+        <h3>Пополнить счет</h3>
+        <div class="form-group">
+            <label for="topUpUserId">ID пользователя:</label>
+            <input type="number" id="topUpUserId" value="1">
+        </div>
+        <div class="form-group">
+            <label for="topUpAmount">Сумма:</label>
+            <input type="number" id="topUpAmount" value="100.00">
+        </div>
+        <button onclick="topUpAccount()">Пополнить счет</button>
+        <div class="response-area" id="topUpAccountResponse"></div>
+
+        <h3>Получить баланс счета</h3>
+        <div class="form-group">
+            <label for="getBalanceUserId">ID пользователя:</label>
+            <input type="number" id="getBalanceUserId" value="1">
+        </div>
+        <button onclick="getAccountBalance()">Получить баланс</button>
+        <div class="response-area" id="getAccountBalanceResponse"></div>
+    </div>
+
+    <div class="service-section">
+        <h2>Orders Service</h2>
+        <h3>Создать заказ</h3>
+        <div class="form-group">
+            <label for="createOrderUserId">ID пользователя:</label>
+            <input type="number" id="createOrderUserId" value="1">
+        </div>
+        <div class="form-group">
+            <label for="createOrderAmount">Сумма:</label>
+            <input type="number" id="createOrderAmount" value="50.00">
+        </div>
+        <div class="form-group">
+            <label for="createOrderDescription">Описание:</label>
+            <input type="text" id="createOrderDescription" value="Тестовый заказ">
+        </div>
+        <button onclick="createOrder()">Создать заказ</button>
+        <div class="response-area" id="createOrderResponse"></div>
+
+        <h3>Получить заказы пользователя</h3>
+        <div class="form-group">
+            <label for="getUserOrdersId">ID пользователя:</label>
+            <input type="number" id="getUserOrdersId" value="1">
+        </div>
+        <button onclick="getUserOrders()">Получить заказы</button>
+        <div class="response-area" id="getUserOrdersResponse"></div>
+    </div>
+
+    <script>
+        const API_GATEWAY_URL = "http://127.0.0.1:8000";
+
+        async function callApi(url, method, body = null) {
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            };
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+
+            try {
+                const response = await fetch(url, options);
+                const data = await response.json();
+                return { status: response.status, data: data };
+            } catch (error) {
+                console.error("API call failed:", error);
+                return { status: 500, data: { detail: error.message } };
+            }
+        }
+
+        async function createAccount() {
+            const userId = document.getElementById("createAccountUserId").value;
+            const responseDiv = document.getElementById("createAccountResponse");
+            const url = `${API_GATEWAY_URL}/payments/accounts`;
+            const body = { user_id: parseInt(userId) };
+            
+            const result = await callApi(url, 'POST', body);
+            responseDiv.textContent = JSON.stringify(result, null, 2);
+        }
+
+        async function topUpAccount() {
+            const userId = document.getElementById("topUpUserId").value;
+            const amount = document.getElementById("topUpAmount").value;
+            const responseDiv = document.getElementById("topUpAccountResponse");
+            const url = `${API_GATEWAY_URL}/payments/accounts/top-up`;
+            const body = { user_id: parseInt(userId), amount: parseFloat(amount) };
+            
+            const result = await callApi(url, 'POST', body);
+            responseDiv.textContent = JSON.stringify(result, null, 2);
+        }
+
+        async function getAccountBalance() {
+            const userId = document.getElementById("getBalanceUserId").value;
+            const responseDiv = document.getElementById("getAccountBalanceResponse");
+            const url = `${API_GATEWAY_URL}/payments/accounts/${userId}/balance`;
+            
+            const result = await callApi(url, 'GET');
+            responseDiv.textContent = JSON.stringify(result, null, 2);
+        }
+
+        async function createOrder() {
+            const userId = document.getElementById("createOrderUserId").value;
+            const amount = document.getElementById("createOrderAmount").value;
+            const description = document.getElementById("createOrderDescription").value;
+            const responseDiv = document.getElementById("createOrderResponse");
+            const url = `${API_GATEWAY_URL}/orders/orders`;
+            const body = { 
+                user_id: parseInt(userId), 
+                amount: parseFloat(amount), 
+                description: description 
+            };
+            
+            const result = await callApi(url, 'POST', body);
+            responseDiv.textContent = JSON.stringify(result, null, 2);
+        }
+
+        async function getUserOrders() {
+            const userId = document.getElementById("getUserOrdersId").value;
+            const responseDiv = document.getElementById("getUserOrdersResponse");
+            const url = `${API_GATEWAY_URL}/orders/orders?user_id=${userId}`;
+            
+            const result = await callApi(url, 'GET');
+            responseDiv.textContent = JSON.stringify(result, null, 2);
+        }
+    </script>
+</body>
+</html> 

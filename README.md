@@ -41,10 +41,10 @@ _Примечание: Файл `requirements.txt` будет создан по�
 
 Каждый сервис запускается отдельно.
 
-#### Payments Service
+#### API Gateway
 ```bash
-# В директории payments_service
-uvicorn main:app --reload --port 8001
+# В директории api_gateway
+uvicorn main:app --reload --port 8000
 ```
 
 #### Orders Service
@@ -53,11 +53,25 @@ uvicorn main:app --reload --port 8001
 uvicorn main:app --reload --port 8002
 ```
 
-#### API Gateway
+#### Payments Service
 ```bash
-# В директории api_gateway
-uvicorn main:app --reload --port 8000
+# В директории payments_service
+uvicorn main:app --reload --port 8001
 ```
+
+#### Frontend Service
+
+Фронтенд реализован как простое веб-приложение. Для его запуска:
+
+1.  Перейдите в директорию `frontend_service`:
+    ```bash
+    cd frontend_service/
+    ```
+2.  Запустите простой HTTP-сервер Python (убедитесь, что бэкенд-сервисы запущены):
+    ```bash
+    python -m http.server 8080
+    ```
+3.  Откройте браузер по адресу `http://localhost:8080/`.
 
 ## API Эндпоинты
 

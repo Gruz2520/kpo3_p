@@ -9,10 +9,20 @@ import httpx
 import asyncio
 import json
 from fastapi.openapi.utils import get_openapi
+from starlette.middleware.cors import CORSMiddleware
 
 from src.infrastructure.api.routers import router as api_gateway_router, get_payments_client, get_orders_client, PAYMENTS_SERVICE_URL, ORDERS_SERVICE_URL
 
 app = FastAPI(title="API Gateway - Aggregated API")
+
+# Configure CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 app.include_router(api_gateway_router)
 
