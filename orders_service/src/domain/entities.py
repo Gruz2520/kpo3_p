@@ -19,12 +19,12 @@ class Order:
         self.amount = amount
         self.description = description
         self.status = status
-        self.created_at = created_at if created_at else datetime.datetime.utcnow()
-        self.updated_at = updated_at if updated_at else datetime.datetime.utcnow()
+        self.created_at = created_at if created_at else datetime.datetime.now(datetime.UTC)
+        self.updated_at = updated_at if updated_at else datetime.datetime.now(datetime.UTC)
 
     def update_status(self, new_status: str):
         self.status = new_status
-        self.updated_at = datetime.datetime.utcnow()
+        self.updated_at = datetime.datetime.now(datetime.UTC)
 
     def __eq__(self, other):
         if not isinstance(other, Order):

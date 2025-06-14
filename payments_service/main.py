@@ -50,7 +50,7 @@ class InboxMessage(Base):
     order_id = Column(String, index=True)
     amount = Column(Numeric(10, 2))
     status = Column(Enum(MessageStatus), default=MessageStatus.PENDING)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.datetime.now(datetime.UTC))
     processed_at = Column(DateTime, nullable=True)
 
 class OutboxMessage(Base):
@@ -59,7 +59,7 @@ class OutboxMessage(Base):
     user_id = Column(Integer)
     order_id = Column(String)
     payment_status = Column(String) # FINISHED or CANCELLED
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.datetime.now(datetime.UTC))
     sent_at = Column(DateTime, nullable=True)
     processed = Column(Boolean, default=False)
 
@@ -177,7 +177,7 @@ def process_payment(request: PaymentProcessRequest, db: Session = Depends(get_db
         
         # Обновляем статус InboxMessage и добавляем OutboxMessage в рамках одной транзакции
         inbox_message.status = MessageStatus.PROCESSED
-        inbox_message.processed_at = datetime.datetime.utcnow()
+        inbox_message.processed_at = datetime.datetime.now(datetime.UTC)
         
         outbox_message = OutboxMessage(
             id=str(uuid.uuid4()), # Уникальный ID для исходящего сообщения
@@ -195,7 +195,7 @@ def process_payment(request: PaymentProcessRequest, db: Session = Depends(get_db
         db.rollback()
         # Отмечаем сообщение как FAILED, если произошла ошибка
         inbox_message.status = MessageStatus.FAILED
-        inbox_message.processed_at = datetime.datetime.utcnow()
+        inbox_message.processed_at = datetime.datetime.now(datetime.UTC)
         db.commit()
         raise HTTPException(status_code=500, detail=f"Ошибка обработки платежа: {str(e)}")
 

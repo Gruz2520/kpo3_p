@@ -91,7 +91,7 @@ class InboxMessageRepository(IInboxMessageRepository):
             order_id=order_id,
             amount=amount,
             status=status,
-            created_at=datetime.datetime.utcnow()
+            created_at=datetime.datetime.now(datetime.UTC)
         )
         self.db.add(inbox_message_model)
         # db.commit() will be handled by the session outside the repo
@@ -100,7 +100,7 @@ class InboxMessageRepository(IInboxMessageRepository):
         message_model = self.db.query(InboxMessageModel).filter(InboxMessageModel.id == message_id).first()
         if message_model:
             message_model.status = status
-            message_model.processed_at = datetime.datetime.utcnow()
+            message_model.processed_at = datetime.datetime.now(datetime.UTC)
             self.db.add(message_model)
             # db.commit() will be handled by the session outside the repo
 
@@ -127,7 +127,7 @@ class OutboxMessageRepository(IOutboxMessageRepository):
             user_id=user_id,
             order_id=order_id,
             payment_status=payment_status,
-            created_at=datetime.datetime.utcnow()
+            created_at=datetime.datetime.now(datetime.UTC)
         )
         self.db.add(outbox_message_model)
         # db.commit() will be handled by the session outside the repo
@@ -136,6 +136,6 @@ class OutboxMessageRepository(IOutboxMessageRepository):
         message_model = self.db.query(OutboxMessageModel).filter(OutboxMessageModel.id == message_id).first()
         if message_model:
             message_model.processed = True
-            message_model.sent_at = datetime.datetime.utcnow()
+            message_model.sent_at = datetime.datetime.now(datetime.UTC)
             self.db.add(message_model)
             # self.db.commit() # Removed to allow higher-level transaction management 
