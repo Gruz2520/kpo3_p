@@ -87,7 +87,10 @@ async def shutdown_event():
     await orders_client.close()
 
 # Health check endpoint
-# Removed to avoid duplicate operation ID, already defined in routers.py
-# @app.get("/health", summary="Проверка работоспособности шлюза")
-# async def health_check():
-#     return {"status": "API Gateway is running"} 
+@app.get("/health", summary="Проверка работоспособности шлюза")
+async def health_check():
+    return {"status": "API Gateway is running"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000) 

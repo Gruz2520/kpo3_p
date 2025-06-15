@@ -5,17 +5,17 @@
 - **API Gateway**: Отвечает за маршрутизацию входящих запросов к соответствующим микросервисам.
 - **Orders Service**: Управляет созданием заказов, их списком и статусами. Реализует паттерн Transactional Outbox для инициирования платежей. Внесены исправления для предотвращения создания заказов с отрицательной или нулевой суммой, а также для корректной сериализации десятичных чисел в ответах API.
 - **Payments Service**: Обрабатывает операции, связанные с пользовательскими счетами: создание, пополнение и просмотр баланса. Реализует паттерны Transactional Inbox и Outbox для обеспечения гарантий доставки сообщений и атомарных операций с балансом.
+- **Frontend Service**: Простой веб-интерфейс для взаимодействия с микросервисами.
 
 ## Технологии
 
-- Python 3.9+
-- FastAPI: Для создания RESTful API.
-- SQLAlchemy: Для работы с базой данных.
-- SQLite (по умолчанию): Для простоты разработки. Может быть заменено на PostgreSQL в продакшене.
-- Uvicorn: ASGI сервер для запуска FastAPI приложений.
-- Pytest: Для написания и запуска тестов.
-- pytest-cov: Для генерации отчетов о покрытии кода.
-- pytest-asyncio: Для тестирования асинхронного кода.
+- Python 3.11+
+- FastAPI: Для создания RESTful API
+- SQLAlchemy: Для работы с базой данных
+- SQLite: Для хранения данных
+- Uvicorn: ASGI сервер для запуска FastAPI приложений
+- Docker & Docker Compose: Для контейнеризации и оркестрации сервисов
+- HTML/CSS/JavaScript: Для фронтенд-интерфейса
 
 ## Установка и запуск
 
@@ -26,99 +26,117 @@ git clone <your-repository-url>
 cd kpo3_p
 ```
 
-### 2. Создание виртуального окружения и установка зависимостей
+### 2. Запуск через Docker
 
+Проект использует Docker для запуска всех сервисов. Убедитесь, что у вас установлены Docker и Docker Compose.
+
+#### Быстрый запуск
+
+##### Windows
 ```bash
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-pip install pytest pytest-cov pytest-asyncio
+start.bat
 ```
 
-_Примечание: Файл `requirements.txt` будет создан позже с необходимыми зависимостями._
+##### Linux/macOS
+```bash
+chmod +x start.sh  # Только при первом запуске
+./start.sh
+```
 
-### 3. Запуск сервисов
+Или вручную:
+```bash
+docker-compose up --build
+```
 
-Каждый сервис запускается отдельно.
+2. Откройте браузер по адресу `http://localhost:8080`
+
+#### Остановка сервисов
+
+```bash
+docker-compose down
+```
+
+### 3. Ручной запуск (без Docker)
+
+Каждый сервис можно запустить отдельно.
 
 #### API Gateway
 ```bash
-# В директории api_gateway
+cd api_gateway
 uvicorn main:app --reload --port 8000
 ```
 
 #### Orders Service
 ```bash
-# В директории orders_service
+cd orders_service
 uvicorn main:app --reload --port 8002
 ```
 
 #### Payments Service
 ```bash
-# В директории payments_service
+cd payments_service
 uvicorn main:app --reload --port 8001
 ```
 
 #### Frontend Service
-
-Фронтенд реализован как простое веб-приложение. Для его запуска:
-
-1.  Перейдите в директорию `frontend_service`:
-    ```bash
-    cd frontend_service/
-    ```
-2.  Запустите простой HTTP-сервер Python (убедитесь, что бэкенд-сервисы запущены):
-    ```bash
-    python -m http.server 8080
-    ```
-3.  Откройте браузер по адресу `http://localhost:8080/`.
+```bash
+cd frontend_service
+python -m http.server 8080
+```
 
 ## API Эндпоинты
 
-### API Gateway (http://127.0.0.1:8000)
+### API Gateway (http://localhost:8000)
 
-API Gateway отвечает за маршрутизацию входящих запросов к соответствующим микросервисам Orders и Payments. Детальные эндпоинты проксирования не отображаются в схеме OpenAPI (Swagger UI), так как являются внутренней реализацией маршрутизации.
+- `GET /health`: Проверка работоспособности шлюза
+- `GET /docs`: Swagger UI документация
 
-- `GET /health`: Проверка работоспособности шлюза.
+### Orders Service (http://localhost:8002)
 
-### Orders Service (http://127.0.0.1:8002)
+- `POST /orders`: Создать новый заказ
+- `GET /orders`: Получить список заказов пользователя
+- `GET /orders/{order_id}`: Получить статус отдельного заказа
+- `POST /orders/payment-status`: Обновить статус заказа по результату оплаты
 
-- `POST /orders`: Создать новый заказ.
-- `GET /orders`: Получить список заказов пользователя.
-- `GET /orders/{order_id}`: Получить статус отдельного заказа.
-- `POST /orders/payment-status`: Обновить статус заказа по результату оплаты (Transactional Inbox).
+### Payments Service (http://localhost:8001)
 
-### Payments Service (http://127.0.0.1:8001)
-
-- `POST /accounts`: Создать счёт для пользователя.
-- `POST /accounts/top-up`: Пополнить счёт пользователя.
-- `GET /accounts/{user_id}/balance`: Просмотреть баланс счёта.
-- `POST /payments/process`: Обработка платежа (Transactional Inbox).
+- `POST /accounts`: Создать счёт для пользователя
+- `POST /accounts/top-up`: Пополнить счёт пользователя
+- `GET /accounts/{user_id}/balance`: Просмотреть баланс счёта
+- `POST /payments/process`: Обработка платежа
 
 ## Сценарий создания заказа и автооплаты
 
-1.  **Пользователь отправляет запрос на создание нового заказа** в `API Gateway`, который перенаправляет его в `Orders Service`.
-2.  **`Orders Service` создаёт заказ и задачу на оплату** в своей базе данных в рамках одной транзакции (Transactional Outbox).
-3.  **`Orders Service` асинхронно извлекает задачу** из базы данных и отправляет её в очередь (или имитирует отправку, используя базу данных).
-4.  **`Payments Service` извлекает задачу из очереди** (Transactional Inbox), обрабатывает её (создает счет, если его нет, списывает деньги, или регистрирует ошибку).
-5.  **`Payments Service` сохраняет результат операции** в свою базу данных и асинхронно отправляет событие о статусе оплаты в очередь (Transactional Outbox).
-6.  **`Orders Service` ожидает событие** об успешности/неуспешности оплаты из очереди и обновляет статус соответствующего заказа.
+1. **Пользователь создает заказ** через веб-интерфейс
+2. **Orders Service** создаёт заказ и задачу на оплату
+3. **Payments Service** обрабатывает платеж
+4. **Orders Service** обновляет статус заказа
 
-## Запуск тестов и проверка покрытия кода
+## Тестирование
 
-Перейдите в корневую директорию проекта `kpo3_p`.
+### Запуск тестов
 
-### Orders Service
 ```bash
+# Orders Service
 pytest orders_service/tests/ --cov=orders_service/src
-```
 
-### Payments Service
-```bash
+# Payments Service
 pytest payments_service/tests/ --cov=payments_service/src
+
+# API Gateway
+pytest api_gateway/tests/ --cov=api_gateway/src
 ```
 
-### API Gateway
-```bash
-pytest api_gateway/tests/ --cov=api_gateway/src
+## Структура проекта
+
+```
+kpo3_p/
+├── api_gateway/
+├── orders_service/
+├── payments_service/
+├── frontend_service/
+├── docker-compose.yml
+├── start.bat        # Скрипт запуска для Windows
+├── start.sh         # Скрипт запуска для Linux/macOS
+└── README.md
 ``` 

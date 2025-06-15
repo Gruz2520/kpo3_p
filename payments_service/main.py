@@ -23,7 +23,7 @@ from src.infrastructure.messaging.outbox_publisher import HTTPOutboxPublisher
 from src.application.use_cases import PublishOutboxMessagesUseCase
 
 # Orders Service URL for Outbox messages
-ORDERS_SERVICE_URL = "http://127.0.0.1:8002"
+ORDERS_SERVICE_URL = "http://orders_service:8002"
 
 # Database Configuration
 DATABASE_URL = "sqlite:///./payments.db"
@@ -224,3 +224,11 @@ async def startup_event():
 async def shutdown_event():
     # Закрытие HTTP клиента, если он не закрывается автоматически
     pass # httpx.AsyncClient() as client: closes automatically 
+
+@app.get("/health")
+async def health_check():
+    return {"status": "Payments Service is running"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8001) 

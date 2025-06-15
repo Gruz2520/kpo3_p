@@ -7,8 +7,8 @@ from ..clients.http_client import MicroserviceClient
 
 router = APIRouter()
 
-PAYMENTS_SERVICE_URL = "http://127.0.0.1:8001"
-ORDERS_SERVICE_URL = "http://127.0.0.1:8002"
+PAYMENTS_SERVICE_URL = "http://payments_service:8001"
+ORDERS_SERVICE_URL = "http://orders_service:8002"
 
 def get_payments_client() -> MicroserviceClient:
     return MicroserviceClient(PAYMENTS_SERVICE_URL)

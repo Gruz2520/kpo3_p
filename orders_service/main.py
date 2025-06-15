@@ -28,7 +28,7 @@ from src.domain.value_objects import OrderStatus
 from src.application.dtos import CreateOrderRequest, OrderResponse, PaymentStatusUpdateRequest
 
 # Payments Service URL for Outbox messages
-PAYMENTS_SERVICE_URL = "http://127.0.0.1:8001"
+PAYMENTS_SERVICE_URL = "http://payments_service:8001"
 
 # Create Database Tables
 Base.metadata.create_all(bind=engine)
@@ -77,3 +77,11 @@ async def startup_event():
 async def shutdown_event():
     # Закрытие HTTP клиента, если он не закрывается автоматически
     pass # httpx.AsyncClient() as client: closes automatically 
+
+@app.get("/health")
+async def health_check():
+    return {"status": "Orders Service is running"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8002) 
