@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Starting containers..."
-docker-compose up -d
+docker-compose up --build
 
 echo "Waiting for services to start..."
 sleep 5

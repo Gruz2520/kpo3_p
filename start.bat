@@ -1,6 +1,6 @@
 @echo off
 echo Starting containers...
-docker-compose up -d
+docker-compose up --build
 
 echo Waiting for services to start...
 timeout /t 5 /nobreak
