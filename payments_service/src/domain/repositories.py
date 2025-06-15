@@ -23,7 +23,7 @@ class IAccountRepository(ABC):
 
 class IInboxMessageRepository(ABC):
     @abstractmethod
-    def get_by_id(self, message_id: str) -> Optional[dict]: # Using dict for now, will refine with proper message entity
+    def get_by_id(self, message_id: str) -> Optional[dict]:
         pass
 
     @abstractmethod
@@ -40,7 +40,7 @@ class IInboxMessageRepository(ABC):
 
 class IOutboxMessageRepository(ABC):
     @abstractmethod
-    def get_unprocessed(self, limit: int = 10) -> List[dict]: # Using dict for now, will refine with proper message entity
+    def get_unprocessed(self, limit: int = 10) -> List[dict]:
         pass
 
     @abstractmethod

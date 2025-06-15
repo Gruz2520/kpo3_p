@@ -21,17 +21,17 @@ class OutboxMessageModel(Base):
     order_id = Column(String, unique=True, index=True)
     user_id = Column(Integer)
     amount = Column(Numeric(10, 2))
-    message_type = Column(String) # e.g., 'payment_request'
-    payload = Column(String) # JSON string of the message content
+    message_type = Column(String) 
+    payload = Column(String)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     sent_at = Column(DateTime, nullable=True)
     processed = Column(Boolean, default=False)
 
 class PaymentStatusInboxModel(Base):
     __tablename__ = "payment_status_inbox"
-    id = Column(String, primary_key=True, index=True) # Message ID for idempotency
+    id = Column(String, primary_key=True, index=True)
     order_id = Column(String, index=True)
-    payment_status = Column(String) # FINISHED or CANCELLED
+    payment_status = Column(String)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     processed_at = Column(DateTime, nullable=True)
     processed = Column(Boolean, default=False) 

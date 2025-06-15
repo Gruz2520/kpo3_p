@@ -8,7 +8,6 @@ class HTTPOutboxPublisher:
         self.payments_service_url = payments_service_url
 
     async def publish(self, message_data: dict):
-        # Assuming message_data["payload"] is a JSON string
         payload = json.loads(message_data["payload"])
         response = await self.http_client.post(
             f"{self.payments_service_url}/payments/process",

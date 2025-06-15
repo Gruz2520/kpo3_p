@@ -27,13 +27,10 @@ from src.application.use_cases import PublishOutboxMessagesUseCase, CreateOrderU
 from src.domain.value_objects import OrderStatus
 from src.application.dtos import CreateOrderRequest, OrderResponse, PaymentStatusUpdateRequest
 
-# Payments Service URL for Outbox messages
 PAYMENTS_SERVICE_URL = "http://payments_service:8001"
 
-# Create Database Tables
 Base.metadata.create_all(bind=engine)
 
-# Dependency to get DB session
 def get_db():
     db = SessionLocal()
     try:
@@ -41,18 +38,15 @@ def get_db():
     finally:
         db.close()
 
-# FastAPI App
 app = FastAPI(title="Orders Service")
 
-# Configure JSON serializer for Decimal to output as float
 from decimal import Decimal
 app.json_encoders = {
-    Decimal: float # Convert Decimal to float for JSON serialization
+    Decimal: float
 }
 
 app.include_router(orders_router)
 
-# Background task for publishing Outbox messages
 async def start_outbox_publisher():
     http_client = httpx.AsyncClient()
     while True:
@@ -62,12 +56,12 @@ async def start_outbox_publisher():
             publisher = HTTPOutboxPublisher(http_client, PAYMENTS_SERVICE_URL)
             use_case = PublishOutboxMessagesUseCase(outbox_repo, publisher)
             await use_case.execute()
-            db.commit() # Сохраняем изменения в базе данных
+            db.commit()
         except Exception as e:
             print(f"Ошибка при публикации Outbox-сообщений: {e}")
         finally:
             db.close()
-        await asyncio.sleep(5) # Проверять каждые 5 секунд
+        await asyncio.sleep(5)
 
 @app.on_event("startup")
 async def startup_event():
@@ -75,8 +69,7 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    # Закрытие HTTP клиента, если он не закрывается автоматически
-    pass # httpx.AsyncClient() as client: closes automatically 
+    pass
 
 @app.get("/health")
 async def health_check():

@@ -27,16 +27,15 @@ class CreateOrderUseCase:
             user_id=request.user_id,
             amount=request.amount,
             description=request.description,
-            status=OrderStatus.NEW.value # Store as string value
+            status=OrderStatus.NEW.value 
         )
         self.order_repo.add(new_order)
 
-        # Create Outbox message for payment request
         payment_request_payload = {
             "user_id": request.user_id,
             "order_id": new_order.id,
-            "amount": float(request.amount), # Convert Decimal to float for JSON serialization
-            "message_id": str(uuid.uuid4()) # Unique ID for idempotency in Payments Service
+            "amount": float(request.amount),
+            "message_id": str(uuid.uuid4())
         }
         self.outbox_repo.add(
             order_id=new_order.id,
@@ -51,7 +50,7 @@ class CreateOrderUseCase:
             user_id=new_order.user_id,
             amount=new_order.amount,
             description=new_order.description,
-            status=OrderStatus[new_order.status], # Convert string back to Enum for response
+            status=OrderStatus[new_order.status],
             created_at=new_order.created_at,
             updated_at=new_order.updated_at
         )
@@ -103,12 +102,10 @@ class UpdateOrderPaymentStatusUseCase:
         self.inbox_repo = inbox_repo
 
     def execute(self, request: PaymentStatusUpdateRequest) -> dict:
-        # Check for idempotency
         existing_inbox_message = self.inbox_repo.get_by_message_id(request.message_id)
         if existing_inbox_message and existing_inbox_message["processed"]:
             return {"message": "Статус платежа для заказа уже обработан (идемпотентность)"}
         
-        # Save incoming message to Inbox (Transaction Inbox Part 1)
         self.inbox_repo.add(
             message_id=request.message_id,
             order_id=request.order_id,
@@ -146,14 +143,14 @@ class PublishOutboxMessagesUseCase:
         for message_data in messages:
             try:
                 payload = json.loads(message_data["payload"])
-                amount_in_payload = Decimal(str(payload["amount"])) # Преобразуем float в Decimal для точного сравнения
+                amount_in_payload = Decimal(str(payload["amount"]))
 
-                if amount_in_payload == Decimal('0.00'): # Сравниваем с Decimal нулем
+                if amount_in_payload == Decimal('0.00'):
                     self.outbox_repo.mark_as_processed(message_data["id"])
                     print(f"Outbox-сообщение с нулевой суммой для order_id={message_data['order_id']} помечено как обработанное.")
-                    continue # Пропускаем отправку
+                    continue
 
-                await self.publisher.publish(message_data) # Используем издателя
+                await self.publisher.publish(message_data) 
                 self.outbox_repo.mark_as_processed(message_data["id"])
                 print(f"Отправлено Outbox-сообщение из Orders Service: order_id={message_data['order_id']}")
             except httpx.HTTPStatusError as e:

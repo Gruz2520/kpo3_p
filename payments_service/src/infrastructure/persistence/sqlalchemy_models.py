@@ -13,7 +13,7 @@ class AccountModel(Base):
 
 class InboxMessageModel(Base):
     __tablename__ = "inbox_messages"
-    id = Column(String, primary_key=True, index=True) # Message ID for idempotency
+    id = Column(String, primary_key=True, index=True)
     user_id = Column(Integer)
     order_id = Column(String, index=True)
     amount = Column(Numeric(10, 2))
@@ -23,7 +23,7 @@ class InboxMessageModel(Base):
 
 class OutboxMessageModel(Base):
     __tablename__ = "outbox_messages"
-    id = Column(String, primary_key=True, index=True) # Unique message ID
+    id = Column(String, primary_key=True, index=True)
     user_id = Column(Integer)
     order_id = Column(String)
     payment_status = Column(String) # FINISHED or CANCELLED

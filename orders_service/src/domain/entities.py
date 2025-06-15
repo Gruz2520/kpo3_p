@@ -9,7 +9,7 @@ class Order:
         user_id: int, 
         amount: Decimal,
         description: str,
-        status: str, # Will be OrderStatus enum value
+        status: str,
         id: Optional[str] = None,
         created_at: Optional[datetime.datetime] = None,
         updated_at: Optional[datetime.datetime] = None

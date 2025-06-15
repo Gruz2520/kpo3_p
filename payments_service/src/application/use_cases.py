@@ -42,7 +42,7 @@ class TopUpAccountUseCase:
             raise ValueError("Счёт не найден")
         
         account.top_up(request.amount)
-        self.account_repo.update(account) # Save changes to the account
+        self.account_repo.update(account)
         return AccountBalanceResponse(
             user_id=account.user_id,
             balance=account.balance
@@ -73,7 +73,6 @@ class ProcessPaymentUseCase:
         self.outbox_repo = outbox_repo
 
     def execute(self, request: PaymentProcessRequest) -> dict:
-        # 1. Проверка на идемпотентность (Transactional Inbox Part 1)
         existing_message = self.inbox_repo.get_by_id(request.message_id)
         if existing_message and existing_message["status"] == MessageStatus.PROCESSED.value:
             return {"message": "Платёж уже обработан (идемпотентность)"}
@@ -81,7 +80,6 @@ class ProcessPaymentUseCase:
         if existing_message and existing_message["status"] == MessageStatus.PENDING.value:
             return {"message": "Платёж уже находится в обработке"}
 
-        # Сохраняем входящее сообщение в Inbox со статусом PENDING
         self.inbox_repo.add(request.message_id, request.user_id, request.order_id, request.amount, MessageStatus.PENDING)
 
         payment_status = "CANCELLED"
@@ -90,7 +88,6 @@ class ProcessPaymentUseCase:
         try:
             account = self.account_repo.get_by_user_id(request.user_id)
             if not account:
-                # Если счета нет, создаем новый (fail событие)
                 new_account = Account(user_id=request.user_id, balance=Decimal('0.00'))
                 self.account_repo.add(new_account)
                 account = new_account
@@ -103,7 +100,6 @@ class ProcessPaymentUseCase:
                 payment_status = "FINISHED"
                 message = "Платёж успешно выполнен."
 
-            # Обновляем статус InboxMessage и добавляем OutboxMessage
             self.inbox_repo.update_status(request.message_id, MessageStatus.PROCESSED)
             self.outbox_repo.add(str(uuid.uuid4()), request.user_id, request.order_id, payment_status)
 
@@ -121,16 +117,16 @@ class PublishOutboxMessagesUseCase:
     def __init__(
         self, 
         outbox_repo: IOutboxMessageRepository,
-        publisher: HTTPOutboxPublisher # Changed to use HTTPOutboxPublisher
+        publisher: HTTPOutboxPublisher
     ):
         self.outbox_repo = outbox_repo
         self.publisher = publisher
 
     async def execute(self):
-        messages = self.outbox_repo.get_unprocessed() # Get unprocessed messages
+        messages = self.outbox_repo.get_unprocessed()
         for message_data in messages:
             try:
-                await self.publisher.publish(message_data) # Use the publisher
+                await self.publisher.publish(message_data)
                 self.outbox_repo.mark_as_processed(message_data["id"])
                 print(f"Отправлено Outbox-сообщение: order_id={message_data['order_id']}, status={message_data['payment_status']}")
             except httpx.HTTPStatusError as e:

@@ -1,7 +1,6 @@
 import sys
 import os
 
-# Add the current directory (api_gateway) to sys.path to allow absolute imports from src
 sys.path.append(os.path.dirname(__file__))
 
 from fastapi import FastAPI
@@ -15,13 +14,12 @@ from src.infrastructure.api.routers import router as api_gateway_router, get_pay
 
 app = FastAPI(title="API Gateway - Aggregated API")
 
-# Configure CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(api_gateway_router)
@@ -41,19 +39,15 @@ async def fetch_openapi_spec(service_url: str) -> dict:
 
 @app.on_event("startup")
 async def startup_event():
-    # Initialize a base OpenAPI schema with API Gateway's own endpoints
-    # This will include /health. Proxy routes are already excluded by include_in_schema=False in routers.py
     current_openapi_schema = get_openapi(
         title=app.title,
-        version="0.1.0", # Keep original version or update as needed
+        version="0.1.0",
         routes=app.routes,
     )
 
-    # Fetch external OpenAPI specs
     payments_spec = await fetch_openapi_spec(PAYMENTS_SERVICE_URL)
     orders_spec = await fetch_openapi_spec(ORDERS_SERVICE_URL)
 
-    # Merge OpenAPI specs from payments_service
     if payments_spec and "paths" in payments_spec:
         for path, methods in payments_spec["paths"].items():
             new_path = f"/payments{path}"
@@ -63,7 +57,6 @@ async def startup_event():
             elif "schemas" not in current_openapi_schema["components"]: current_openapi_schema["components"]["schemas"] = {}
             current_openapi_schema["components"]["schemas"].update(payments_spec["components"]["schemas"])
 
-    # Merge OpenAPI specs from orders_service
     if orders_spec and "paths" in orders_spec:
         for path, methods in orders_spec["paths"].items():
             new_path = f"/orders{path}"
@@ -73,20 +66,15 @@ async def startup_event():
             elif "schemas" not in current_openapi_schema["components"]: current_openapi_schema["components"]["schemas"] = {}
             current_openapi_schema["components"]["schemas"].update(orders_spec["components"]["schemas"])
 
-    # Assign the completely merged schema back to app.openapi_schema
     app.openapi_schema = current_openapi_schema
-    # print("ОБЪЕДИНЕННАЯ СХЕМА OPENAPI:")
-    # print(json.dumps(app.openapi_schema, indent=2)) # Removed for clean output
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    # Close httpx clients on shutdown
     payments_client = get_payments_client()
     orders_client = get_orders_client()
     await payments_client.close()
     await orders_client.close()
 
-# Health check endpoint
 @app.get("/health", summary="Проверка работоспособности шлюза")
 async def health_check():
     return {"status": "API Gateway is running"}

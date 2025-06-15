@@ -47,10 +47,10 @@ class OrderRepository(IOrderRepository):
             user_id=order.user_id,
             amount=order.amount,
             description=order.description,
-            status=OrderStatus[order.status] # Convert string back to Enum for storage
+            status=OrderStatus[order.status]
         )
         self.db.add(order_model)
-        self.db.flush() # To get the generated ID if not already set
+        self.db.flush()
 
     def update(self, order: Order):
         order_model = self.db.query(OrderModel).filter(OrderModel.id == order.id).first()
@@ -58,7 +58,7 @@ class OrderRepository(IOrderRepository):
             order_model.user_id = order.user_id
             order_model.amount = order.amount
             order_model.description = order.description
-            order_model.status = OrderStatus[order.status] # Convert string back to Enum for storage
+            order_model.status = OrderStatus[order.status]
             order_model.updated_at = order.updated_at
             self.db.add(order_model)
 
@@ -91,7 +91,7 @@ class OutboxMessageRepository(IOutboxMessageRepository):
             created_at=datetime.datetime.utcnow()
         )
         self.db.add(outbox_message_model)
-        self.db.flush() # To get the generated ID
+        self.db.flush()
 
     def mark_as_processed(self, message_id: str):
         message_model = self.db.query(OutboxMessageModel).filter(OutboxMessageModel.id == message_id).first()
@@ -99,8 +99,6 @@ class OutboxMessageRepository(IOutboxMessageRepository):
             message_model.processed = True
             message_model.sent_at = datetime.datetime.utcnow()
             self.db.add(message_model)
-
-# IPaymentStatusInboxRepository is an ABC, not to be instantiated directly
 
 class PaymentStatusInboxRepository(IPaymentStatusInboxRepository):
     def __init__(self, db: Session):
@@ -128,7 +126,7 @@ class PaymentStatusInboxRepository(IPaymentStatusInboxRepository):
             created_at=datetime.datetime.utcnow()
         )
         self.db.add(inbox_message_model)
-        self.db.flush() # To ensure ID is set for the message
+        self.db.flush()
 
     def mark_as_processed(self, message_id: str):
         message_model = self.db.query(PaymentStatusInboxModel).filter(PaymentStatusInboxModel.id == message_id).first()
